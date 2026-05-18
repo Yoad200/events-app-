@@ -400,17 +400,20 @@ function renderSignups() {
         <div class="signup-actions">
           <button class="btn-action btn-approve" data-action="approve" data-id="${signup.id}">✓ אשר</button>
           <button class="btn-action btn-reject" data-action="reject" data-id="${signup.id}">✗ דחה</button>
+          ${w.phone ? `<button class="btn-action btn-whatsapp" data-wa-action="ask" data-signup-id="${signup.id}" title="שלח שאלה ב-WhatsApp">📱</button>` : ''}
         </div>
       `;
     } else if (signup.status === "approved") {
       actionsHtml = `
         <div class="signup-actions">
+          ${w.phone ? `<button class="btn-action btn-whatsapp" data-wa-action="approved" data-signup-id="${signup.id}">📱 שלח אישור</button>` : ''}
           <button class="btn-action btn-reject" data-action="reject" data-id="${signup.id}">בטל אישור</button>
         </div>
       `;
     } else if (signup.status === "rejected") {
       actionsHtml = `
         <div class="signup-actions">
+          ${w.phone ? `<button class="btn-action btn-whatsapp-grey" data-wa-action="rejected" data-signup-id="${signup.id}">📱 שלח דחייה</button>` : ''}
           <button class="btn-action btn-approve" data-action="approve" data-id="${signup.id}">החזר</button>
         </div>
       `;
@@ -459,11 +462,98 @@ function renderSignups() {
       }
     };
   });
+
+  // WhatsApp buttons
+  list.querySelectorAll("[data-wa-action]").forEach(btn => {
+    btn.onclick = () => {
+      const signupId = parseInt(btn.dataset.signupId);
+      const waAction = btn.dataset.waAction;
+      const signup = state.currentSignups.find(s => s.id === signupId);
+      if (signup) openWhatsApp(signup, waAction);
+    };
+  });
 }
 
 function setSignupTab(status) {
   state.currentSignupStatus = status;
   renderSignups();
+}
+
+// ─── WhatsApp Integration ───────────────────────
+
+function normalizePhoneForWhatsApp(phone) {
+  if (!phone) return null;
+  // הסר רווחים, מקפים, סוגריים
+  let clean = String(phone).replace(/[\s\-\(\)]/g, '');
+  // אם מתחיל ב-+972 - השאר ולהסיר את ה-+
+  if (clean.startsWith('+972')) return clean.substring(1);
+  // אם מתחיל ב-972 - השאר
+  if (clean.startsWith('972')) return clean;
+  // אם מתחיל ב-0 - החלף ל-972
+  if (clean.startsWith('0')) return '972' + clean.substring(1);
+  // אחרת - הוסף 972
+  return '972' + clean;
+}
+
+function buildWhatsAppMessage(signup, action) {
+  const event = state.currentEvent;
+  const name = signup.worker.name;
+  const date = formatEventDate(event.event_date);
+  const startTime = formatTime(event.start_time);
+  const endTime = formatTime(event.end_time);
+  const location = event.location;
+  const rate = event.hourly_rate;
+  const role = signup.role;
+  const notes = event.notes;
+
+  if (action === 'approved') {
+    let msg = `שלום ${name}! 🎉\n\n`;
+    msg += `שמחים להודיע שהתקבלת לאירוע:\n\n`;
+    msg += `📅 ${date}\n`;
+    msg += `🕒 ${startTime} - ${endTime}\n`;
+    msg += `📍 ${location}\n`;
+    msg += `💼 תפקיד: ${role}\n`;
+    msg += `💰 ${rate} ₪ לשעה\n`;
+    if (notes) msg += `\n📝 ${notes}\n`;
+    msg += `\nנא לאשר הגעה 🙏\n\n`;
+    msg += `גלובל - חברת כוח אדם`;
+    return msg;
+  }
+
+  if (action === 'rejected') {
+    let msg = `שלום ${name},\n\n`;
+    msg += `תודה רבה על ההתעניינות באירוע ב-${date}.\n`;
+    msg += `הפעם בחרנו מועמדים אחרים, אבל נשמור איתך בקשר לאירועים הבאים.\n\n`;
+    msg += `תודה,\n`;
+    msg += `גלובל - חברת כוח אדם`;
+    return msg;
+  }
+
+  if (action === 'ask') {
+    let msg = `שלום ${name},\n\n`;
+    msg += `קיבלתי את הרישום שלך לאירוע ב-${date} (${role}).\n`;
+    msg += `יש לי כמה שאלות:\n\n`;
+    msg += `\n\n`;
+    msg += `תודה,\n`;
+    msg += `גלובל - חברת כוח אדם`;
+    return msg;
+  }
+
+  return '';
+}
+
+function openWhatsApp(signup, action) {
+  const phone = normalizePhoneForWhatsApp(signup.worker.phone);
+  if (!phone) {
+    showToast("אין מספר טלפון לעובד הזה", "error");
+    return;
+  }
+
+  const message = buildWhatsAppMessage(signup, action);
+  const encoded = encodeURIComponent(message);
+  const url = `https://wa.me/${phone}?text=${encoded}`;
+
+  window.open(url, '_blank');
 }
 
 // ─── Delete Event ───────────────────────────────

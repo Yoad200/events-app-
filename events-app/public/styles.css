@@ -624,6 +624,26 @@ textarea.form-input { resize: vertical; }
 .btn-reject { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
 .btn-reject:hover { background: #fee2e2; }
 
+.btn-whatsapp {
+  background: #25d366;
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+.btn-whatsapp:hover {
+  background: #128c7e;
+}
+
+.btn-whatsapp-grey {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+  font-weight: 500;
+}
+.btn-whatsapp-grey:hover {
+  background: #e5e7eb;
+}
+
 .signups-empty {
   text-align: center;
   padding: 40px;
