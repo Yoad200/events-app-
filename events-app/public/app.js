@@ -294,7 +294,15 @@ async function openEventDetails(event) {
   const totalNeeded = event.needed_waiters + event.needed_setup +
                      event.needed_attractions + event.needed_food_stalls;
 
+  const statusBadge = event.status === 'open'
+    ? '<span style="background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600">פתוח להרשמה</span>'
+    : '<span style="background:#fee2e2;color:#991b1b;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600">סגור להרשמה</span>';
+
   $("ed-info").innerHTML = `
+    <div class="event-info-row">
+      <strong>סטטוס:</strong>
+      <span>${statusBadge}</span>
+    </div>
     <div class="event-info-row">
       <strong>📅 תאריך:</strong>
       <span>${formatEventDate(event.event_date)}</span>
@@ -327,6 +335,11 @@ async function openEventDetails(event) {
       </div>
     ` : ''}
   `;
+
+  // Update toggle status button text
+  $("btn-toggle-status").innerHTML = event.status === 'open'
+    ? '🔒 סגור הרשמה'
+    : '🔓 פתח הרשמה מחדש';
 
   $("event-details-modal").style.display = "flex";
   state.currentSignupStatus = "pending";
@@ -453,6 +466,88 @@ function setSignupTab(status) {
   renderSignups();
 }
 
+// ─── Delete Event ───────────────────────────────
+
+async function deleteEvent() {
+  if (!state.currentEvent) return;
+
+  showConfirm(
+    "מחיקת אירוע",
+    `האם למחוק את האירוע "${state.currentEvent.title}"?\n\nכל הרישומים יימחקו גם. לא ניתן לבטל.`,
+    async () => {
+      try {
+        await api("/api/events/delete", {
+          method: "POST",
+          body: { event_id: state.currentEvent.id }
+        });
+
+        $("confirm-modal").style.display = "none";
+        $("event-details-modal").style.display = "none";
+        showToast("האירוע נמחק", "info");
+        await loadEvents();
+      } catch (e) {
+        showToast(`שגיאה: ${e.message}`, "error");
+      }
+    }
+  );
+}
+
+// ─── Toggle Event Status ────────────────────────
+
+async function toggleEventStatus() {
+  if (!state.currentEvent) return;
+
+  const newStatus = state.currentEvent.status === 'open' ? 'closed' : 'open';
+  const actionText = newStatus === 'closed' ? 'לסגור' : 'לפתוח מחדש';
+
+  showConfirm(
+    newStatus === 'closed' ? "סגירת הרשמה" : "פתיחת הרשמה",
+    `האם ${actionText} את ההרשמה לאירוע "${state.currentEvent.title}"?`,
+    async () => {
+      try {
+        await api("/api/events/status", {
+          method: "POST",
+          body: { event_id: state.currentEvent.id, status: newStatus }
+        });
+
+        $("confirm-modal").style.display = "none";
+        state.currentEvent.status = newStatus;
+        showToast(newStatus === 'closed' ? "ההרשמה נסגרה" : "ההרשמה נפתחה מחדש", "success");
+
+        // Refresh
+        await loadEvents();
+        await openEventDetails(state.currentEvent);
+      } catch (e) {
+        showToast(`שגיאה: ${e.message}`, "error");
+      }
+    }
+  );
+}
+
+// ─── Delete Worker ───────────────────────────────
+
+async function deleteWorker(workerId, workerName) {
+  showConfirm(
+    "מחיקת עובד",
+    `האם למחוק את "${workerName}" מהמערכת?\n\nכל ההיסטוריה שלו תימחק. לא ניתן לבטל.`,
+    async () => {
+      try {
+        await api("/api/workers/delete", {
+          method: "POST",
+          body: { worker_id: parseInt(workerId) }
+        });
+
+        $("confirm-modal").style.display = "none";
+        showToast("העובד נמחק", "info");
+        await openWorkersModal(); // Refresh the list
+        await loadEvents(); // Refresh events (counts may change)
+      } catch (e) {
+        showToast(`שגיאה: ${e.message}`, "error");
+      }
+    }
+  );
+}
+
 // ─── Workers Modal ──────────────────────────────
 
 async function openWorkersModal() {
@@ -501,9 +596,20 @@ async function openWorkersModal() {
             </div>
           ` : ''}
         </div>
+        <button class="btn-action btn-reject" data-worker-id="${w.id}" data-worker-name="${escapeHtml(w.name)}" title="מחק עובד">🗑</button>
       `;
       list.appendChild(card);
     }
+
+    // Bind delete buttons
+    list.querySelectorAll("[data-worker-id]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const workerId = btn.dataset.workerId;
+        const workerName = btn.dataset.workerName;
+        deleteWorker(workerId, workerName);
+      };
+    });
   } catch (e) {
     showToast(`שגיאה: ${e.message}`, "error");
   }
@@ -529,6 +635,9 @@ function attachEvents() {
       showShareLink(state.currentEvent.share_id);
     }
   };
+
+  $("btn-delete-event").onclick = deleteEvent;
+  $("btn-toggle-status").onclick = toggleEventStatus;
 
   document.querySelectorAll(".filter-tab").forEach(tab => {
     tab.onclick = () => setFilter(tab.dataset.filter);
