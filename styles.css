@@ -648,6 +648,25 @@ textarea.form-input { resize: vertical; }
   gap: 12px;
 }
 
+.worker-card .btn-reject {
+  margin-right: auto;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.worker-card .btn-reject:hover {
+  background: #fef2f2;
+}
+
 .worker-info {
   flex: 1;
 }

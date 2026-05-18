@@ -524,6 +524,30 @@ async function toggleEventStatus() {
   );
 }
 
+// ─── Delete Worker ───────────────────────────────
+
+async function deleteWorker(workerId, workerName) {
+  showConfirm(
+    "מחיקת עובד",
+    `האם למחוק את "${workerName}" מהמערכת?\n\nכל ההיסטוריה שלו תימחק. לא ניתן לבטל.`,
+    async () => {
+      try {
+        await api("/api/workers/delete", {
+          method: "POST",
+          body: { worker_id: parseInt(workerId) }
+        });
+
+        $("confirm-modal").style.display = "none";
+        showToast("העובד נמחק", "info");
+        await openWorkersModal(); // Refresh the list
+        await loadEvents(); // Refresh events (counts may change)
+      } catch (e) {
+        showToast(`שגיאה: ${e.message}`, "error");
+      }
+    }
+  );
+}
+
 // ─── Workers Modal ──────────────────────────────
 
 async function openWorkersModal() {
@@ -572,9 +596,20 @@ async function openWorkersModal() {
             </div>
           ` : ''}
         </div>
+        <button class="btn-action btn-reject" data-worker-id="${w.id}" data-worker-name="${escapeHtml(w.name)}" title="מחק עובד">🗑</button>
       `;
       list.appendChild(card);
     }
+
+    // Bind delete buttons
+    list.querySelectorAll("[data-worker-id]").forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const workerId = btn.dataset.workerId;
+        const workerName = btn.dataset.workerName;
+        deleteWorker(workerId, workerName);
+      };
+    });
   } catch (e) {
     showToast(`שגיאה: ${e.message}`, "error");
   }
