@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הרשמה לאירוע</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="public-page">
+
+<!-- Loading state -->
+<div id="loading" class="public-loading">
+  <div class="spinner"></div>
+  <p>טוען פרטי אירוע...</p>
+</div>
+
+<!-- Not found state -->
+<div id="not-found" class="public-container" style="display:none">
+  <div class="public-card error-card">
+    <img src="logo.png" alt="גלובל" class="logo-medium">
+    <div class="icon">❌</div>
+    <h1>האירוע לא נמצא</h1>
+    <p>הקישור שגוי או שהאירוע הוסר. צור קשר עם המנהל.</p>
+  </div>
+</div>
+
+<!-- Closed state -->
+<div id="closed" class="public-container" style="display:none">
+  <div class="public-card warning-card">
+    <img src="logo.png" alt="גלובל" class="logo-medium">
+    <div class="icon">🔒</div>
+    <h1>ההרשמה סגורה</h1>
+    <p>לאירוע הזה לא ניתן להירשם יותר. צור קשר עם המנהל אם עדיין יש מקום.</p>
+  </div>
+</div>
+
+<!-- Already signed up state -->
+<div id="already-signed" class="public-container" style="display:none">
+  <div class="public-card success-card">
+    <img src="logo.png" alt="גלובל" class="logo-medium">
+    <div class="icon">✓</div>
+    <h1>כבר נרשמת!</h1>
+    <p id="already-signed-msg">נרשמת לאירוע. המנהל יחזיר אליך בקרוב.</p>
+  </div>
+</div>
+
+<!-- Main signup form -->
+<div id="signup-container" class="public-container" style="display:none">
+
+  <!-- Company branding header -->
+  <div class="company-banner">
+    <img src="logo.png" alt="גלובל" class="logo-banner">
+    <p class="company-tagline">גלובל - חברת כוח אדם</p>
+  </div>
+
+  <div class="public-card">
+
+    <!-- Event details -->
+    <div class="event-banner">
+      <h1 id="ev-title">אירוע</h1>
+      <div class="event-meta">
+        <div class="meta-item">
+          <span class="meta-icon">📅</span>
+          <span id="ev-date"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">🕒</span>
+          <span id="ev-hours"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">📍</span>
+          <span id="ev-location"></span>
+        </div>
+        <div class="meta-item highlight">
+          <span class="meta-icon">💰</span>
+          <span id="ev-rate"></span>
+        </div>
+      </div>
+      <div class="event-notes" id="ev-notes-box" style="display:none">
+        <strong>הערות:</strong> <span id="ev-notes"></span>
+      </div>
+    </div>
+
+    <!-- Roles needed -->
+    <h2 class="form-section-title">בחר תפקיד</h2>
+    <p class="hint" style="text-align:center;margin-bottom:14px">
+      בחר את התפקיד שאתה רוצה לעבוד בו
+    </p>
+    <div class="roles-grid" id="roles-grid"></div>
+
+    <!-- Form -->
+    <div class="form-section" id="signup-form-section" style="display:none">
+      <h2 class="form-section-title">הפרטים שלך</h2>
+      <div class="form-row">
+        <label>שם מלא *</label>
+        <input type="text" id="signup-name" class="form-input" placeholder="ישראל ישראלי" maxlength="100">
+      </div>
+      <div class="form-row">
+        <label>טלפון</label>
+        <input type="tel" id="signup-phone" class="form-input" placeholder="050-0000000" maxlength="20">
+      </div>
+      <div class="form-row">
+        <label>הערות (אופציונלי)</label>
+        <textarea id="signup-notes" class="form-input" rows="2" placeholder="לדוגמה: יש לי רכב, אגיע ב-17:30..." maxlength="300"></textarea>
+      </div>
+      <p class="error" id="signup-error"></p>
+      <button class="btn-primary" id="btn-signup">📝 שלח רישום</button>
+    </div>
+
+  </div>
+
+  <footer class="public-footer">
+    <img src="logo.png" alt="גלובל" class="logo-footer">
+    <p><strong>גלובל - חברת כוח אדם</strong></p>
+    <p>הקישור הזה הוא לקריאה בלבד. כשתשלח את הרישום — המנהל יחזיר אליך בקרוב.</p>
+  </footer>
+</div>
+
+<!-- Success state -->
+<div id="success" class="public-container" style="display:none">
+  <div class="public-card success-card">
+    <img src="logo.png" alt="גלובל" class="logo-medium">
+    <div class="icon">🎉</div>
+    <h1>נרשמת בהצלחה!</h1>
+    <p>נשלחה ההודעה למנהל. אתה תקבל הודעה כשהוא יחליט אם להזמין אותך.</p>
+    <p class="hint" style="margin-top:16px">תוכל לסגור את החלון.</p>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="event.js"></script>
+
+</body>
+</html>
