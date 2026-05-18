@@ -550,6 +550,17 @@ async function deleteWorker(workerId, workerName) {
 
 // ─── Workers Modal ──────────────────────────────
 
+// ─── Confirm Modal Helper ──────────────────────
+
+let confirmCallback = null;
+
+function showConfirm(title, message, onConfirm) {
+  $("confirm-title").textContent = title;
+  $("confirm-message").textContent = message;
+  confirmCallback = onConfirm;
+  $("confirm-modal").style.display = "flex";
+}
+
 async function openWorkersModal() {
   $("workers-modal").style.display = "flex";
 
@@ -638,6 +649,15 @@ function attachEvents() {
 
   $("btn-delete-event").onclick = deleteEvent;
   $("btn-toggle-status").onclick = toggleEventStatus;
+
+  // Confirm modal - bind the confirm button
+  $("btn-confirm-yes").onclick = () => {
+    if (confirmCallback) {
+      const cb = confirmCallback;
+      confirmCallback = null;
+      cb();
+    }
+  };
 
   document.querySelectorAll(".filter-tab").forEach(tab => {
     tab.onclick = () => setFilter(tab.dataset.filter);
