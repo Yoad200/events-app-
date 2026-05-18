@@ -11,7 +11,7 @@
 <!-- ─────────── Login Screen ─────────── -->
 <div id="screen-login" class="screen">
   <div class="card">
-    <div class="icon">🎉</div>
+    <img src="logo.png" alt="גלובל" class="logo-large">
     <h1 class="title">ניהול אירועים</h1>
     <p class="subtitle">היכנס כדי להתחיל</p>
     <div class="form-section">
@@ -29,7 +29,10 @@
 
   <!-- Header -->
   <div class="app-header">
-    <h1>🎉 ניהול אירועים</h1>
+    <div class="app-header-title">
+      <img src="logo.png" alt="גלובל" class="logo-header">
+      <h1>ניהול אירועים</h1>
+    </div>
     <div class="app-header-actions">
       <button class="btn-secondary" id="btn-workers">👥 עובדים</button>
       <button class="btn-primary" id="btn-new-event">+ אירוע חדש</button>
@@ -183,6 +186,8 @@
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn-danger" id="btn-delete-event">🗑 מחק אירוע</button>
+      <button class="btn-warning" id="btn-toggle-status">🔒 סגור הרשמה</button>
       <button class="btn-secondary" id="btn-share-event">📤 שתף קישור</button>
       <button class="btn-primary" data-close="event-details-modal">סגור</button>
     </div>
