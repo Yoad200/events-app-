@@ -324,9 +324,48 @@ function sendEventToWhatsApp() {
   message += `מי שמעוניין לפרטים!\n`;
   message += `_גלובל - חברת כוח אדם_`;
 
-  // פתח WhatsApp
-  const encoded = encodeURIComponent(message);
-  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  // העתק את ההודעה לזיכרון ופתח WhatsApp Web
+  navigator.clipboard.writeText(message).then(() => {
+    showToast("✅ ההודעה הועתקה! פותח WhatsApp...", "success");
+    setTimeout(() => {
+      window.open('https://web.whatsapp.com/', '_blank');
+    }, 500);
+  }).catch(() => {
+    // אם ההעתקה נכשלה - הצג את ההודעה בחלון
+    showWhatsAppFallback(message);
+  });
+}
+
+function showWhatsAppFallback(message) {
+  // צור modal זמני שמציג את ההודעה לבחירה ידנית
+  const existing = document.getElementById("wa-fallback-modal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "wa-fallback-modal";
+  modal.className = "modal-backdrop";
+  modal.style.display = "flex";
+  modal.innerHTML = `
+    <div class="modal" style="max-width:500px">
+      <div class="modal-header">
+        <h2>📱 העתק לקבוצת WhatsApp</h2>
+        <button class="modal-close" onclick="document.getElementById('wa-fallback-modal').remove()">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="text-align:center;color:#6b7280;margin-bottom:12px">
+          סמן את הטקסט והעתק (Ctrl+C), אז הדבק בקבוצת ה-WhatsApp שלך
+        </p>
+        <textarea id="wa-message-text" readonly style="width:100%;min-height:280px;padding:12px;border:1px solid #e5e7eb;border-radius:12px;font-family:inherit;font-size:14px;direction:rtl"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="window.open('https://web.whatsapp.com/', '_blank')">פתח WhatsApp Web</button>
+        <button class="btn-primary" onclick="document.getElementById('wa-message-text').select();document.execCommand('copy');document.getElementById('wa-fallback-modal').remove();">העתק הכל</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById("wa-message-text").value = message;
+  document.getElementById("wa-message-text").select();
 }
 
 function copyShareLink() {
