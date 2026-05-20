@@ -271,7 +271,62 @@ function showShareLink(shareId) {
   const url = `${window.location.origin}/event.html?id=${shareId}`;
   $("share-link").value = url;
   $("copy-confirm").textContent = "";
+
+  // שמור את ה-share_id לכפתור ה-WhatsApp
+  const whatsappBtn = $("btn-send-whatsapp");
+  if (whatsappBtn) whatsappBtn.setAttribute("data-share-id", shareId);
+
   $("share-modal").style.display = "flex";
+}
+
+function sendEventToWhatsApp() {
+  const btn = $("btn-send-whatsapp");
+  if (!btn) return;
+  const shareId = btn.dataset.shareId;
+  if (!shareId) {
+    showToast("שגיאה: אירוע לא נמצא", "error");
+    return;
+  }
+
+  // מצא את האירוע ברשימה
+  const event = state.events.find(e => e.share_id === shareId);
+  if (!event) {
+    showToast("שגיאה: אירוע לא נמצא", "error");
+    return;
+  }
+
+  // בנה את ההודעה
+  const url = `${window.location.origin}/event.html?id=${shareId}`;
+  const date = formatEventDate(event.event_date);
+  const startTime = formatTime(event.start_time);
+  const endTime = formatTime(event.end_time);
+
+  // רשימת תפקידים
+  const roles = [];
+  if (event.needed_waiters > 0) roles.push(`🍽️ ${event.needed_waiters} מלצרים`);
+  if (event.needed_setup > 0) roles.push(`🔨 ${event.needed_setup} הקמה/פירוק`);
+  if (event.needed_attractions > 0) roles.push(`🎮 ${event.needed_attractions} תפעול אטרקציות`);
+  if (event.needed_food_stalls > 0) roles.push(`🌮 ${event.needed_food_stalls} דוכני מזון`);
+
+  let message = `🎉 *אירוע חדש - נא להירשם!*\n\n`;
+  message += `📅 ${date}\n`;
+  message += `🕒 ${startTime} - ${endTime}\n`;
+  message += `📍 ${event.location}\n`;
+  message += `💰 ${event.hourly_rate} ₪ לשעה\n\n`;
+  if (roles.length > 0) {
+    message += `*תפקידים זמינים:*\n`;
+    message += roles.join('\n') + '\n\n';
+  }
+  if (event.notes) {
+    message += `📝 ${event.notes}\n\n`;
+  }
+  message += `👇 *להירשם, לחצו על הקישור:*\n${url}\n\n`;
+  message += `מי שמעוניין לפרטים!\n`;
+  message += `_גלובל - חברת כוח אדם_`;
+
+  // פתח WhatsApp
+  const encoded = encodeURIComponent(message);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
 }
 
 function copyShareLink() {
@@ -729,6 +784,10 @@ function attachEvents() {
   $("btn-workers").onclick = openWorkersModal;
   $("btn-save-event").onclick = saveNewEvent;
   $("btn-copy-link").onclick = copyShareLink;
+
+  // כפתור שליחה ב-WhatsApp לקבוצה
+  const whatsappBtn = $("btn-send-whatsapp");
+  if (whatsappBtn) whatsappBtn.onclick = sendEventToWhatsApp;
 
   $("btn-share-event").onclick = () => {
     if (state.currentEvent) {
