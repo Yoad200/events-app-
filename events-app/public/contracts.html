@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חוזים - גלובל</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* סגנונות מיוחדים לדף החוזים */
+  .contracts-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0;
+  }
+
+  .contracts-tab {
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+
+  .contracts-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+  }
+
+  .contracts-tab:hover:not(.active) {
+    color: #4b5563;
+  }
+
+  .item-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .item-card-body {
+    flex: 1;
+  }
+
+  .item-card-title {
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 4px;
+  }
+
+  .item-card-sub {
+    color: #6b7280;
+    font-size: 13px;
+  }
+
+  .item-card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-completed {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ─────────── מסך התחברות ─────────── -->
+<div id="screen-login" class="screen">
+  <div class="card">
+    <img src="logo.png" alt="גלובל" class="logo-large" onerror="this.style.display='none'">
+    <h1 class="title">ניהול חוזים</h1>
+    <p class="subtitle">היכנס כדי להתחיל</p>
+    <div class="form-section">
+      <div class="form-row">
+        <input type="password" id="login-pwd" class="form-input" placeholder="סיסמה" maxlength="128">
+      </div>
+      <p class="error" id="login-error"></p>
+    </div>
+    <button class="btn-primary" id="btn-login">כניסה</button>
+    <p style="text-align:center;margin-top:16px;font-size:13px;color:#6b7280">
+      <a href="/" style="color:#2563eb;text-decoration:none">← חזרה לאתר הראשי</a>
+    </p>
+  </div>
+</div>
+
+<!-- ─────────── דשבורד ראשי ─────────── -->
+<div id="screen-app" class="app" style="display:none">
+
+  <div class="app-header">
+    <div class="app-header-title">
+      <img src="logo.png" alt="גלובל" class="logo-header" onerror="this.style.display='none'">
+      <h1>ניהול חוזים</h1>
+    </div>
+    <div class="app-header-actions">
+      <button class="btn-secondary" id="btn-employers">🏢 מעסיקים</button>
+      <button class="btn-primary" id="btn-new-contract">+ שלח לעובד</button>
+      <button class="btn-link" id="btn-logout">יציאה</button>
+    </div>
+  </div>
+
+  <div class="events-container">
+    <div class="events-header">
+      <h2>חוזים</h2>
+      <div class="contracts-tabs">
+        <button class="contracts-tab active" data-filter="pending">⏳ ממתינים</button>
+        <button class="contracts-tab" data-filter="completed">✓ חתומים</button>
+        <button class="contracts-tab" data-filter="all">הכל</button>
+      </div>
+    </div>
+
+    <div id="contracts-list"></div>
+
+    <div class="empty-state" id="contracts-empty" style="display:none">
+      <div class="icon">📋</div>
+      <h3>אין חוזים עדיין</h3>
+      <p>לחץ "+ שלח לעובד" כדי להתחיל</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─────────── חלון מעסיקים ─────────── -->
+<div class="modal-backdrop" id="employers-modal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2>🏢 ניהול מעסיקים</h2>
+      <button class="modal-close" data-close="employers-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:14px">
+        <button class="btn-primary" id="btn-new-employer">+ הוסף מעסיק חדש</button>
+      </div>
+      <div id="employers-list"></div>
+      <div class="empty-state" id="employers-empty" style="display:none">
+        <div class="icon">🏢</div>
+        <p>אין מעסיקים עדיין</p>
+        <p style="font-size:13px;margin-top:6px">הוסף מעסיק כדי לשלוח חוזים</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── חלון מעסיק (יצירה/עריכה) ─────────── -->
+<div class="modal-backdrop" id="employer-edit-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="employer-edit-title">מעסיק חדש</h2>
+      <button class="modal-close" data-close="employer-edit-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="employer-id">
+
+      <div class="form-row">
+        <label>שם החברה <span style="color:#dc2626">*</span></label>
+        <input type="text" id="emp-name" class="form-input" maxlength="100" placeholder="לדוגמה: אבי המטוסים בע״מ">
+      </div>
+
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label>ח.פ. / עוסק מורשה</label>
+          <input type="text" id="emp-business-id" class="form-input" maxlength="20" inputmode="numeric">
+        </div>
+        <div class="form-row">
+          <label>מספר תיק ניכויים</label>
+          <input type="text" id="emp-tax-file" class="form-input" maxlength="9" inputmode="numeric" placeholder="9 ספרות">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>כתובת</label>
+        <input type="text" id="emp-address" class="form-input" maxlength="200">
+      </div>
+
+      <div class="form-row">
+        <label>מספר טלפון</label>
+        <input type="tel" id="emp-phone" class="form-input" maxlength="20">
+      </div>
+
+      <h3 class="section-title" style="margin-top:16px">איש קשר במעסיק</h3>
+
+      <div class="form-row-grid">
+        <div class="form-row">
+          <label>שם איש קשר</label>
+          <input type="text" id="emp-contact-name" class="form-input" maxlength="50">
+        </div>
+        <div class="form-row">
+          <label>טלפון איש קשר</label>
+          <input type="tel" id="emp-contact-phone" class="form-input" maxlength="20">
+        </div>
+      </div>
+
+      <p class="error" id="employer-error"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="employer-edit-modal">ביטול</button>
+      <button class="btn-primary" id="btn-save-employer">שמור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── חלון שליחת חוזה ─────────── -->
+<div class="modal-backdrop" id="new-contract-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>שלח חוזה לעובד</h2>
+      <button class="modal-close" data-close="new-contract-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>שם העובד <span style="color:#dc2626">*</span></label>
+        <input type="text" id="contract-employee-name" class="form-input" maxlength="100">
+      </div>
+
+      <div class="form-row">
+        <label>טלפון העובד (לWhatsApp)</label>
+        <input type="tel" id="contract-employee-phone" class="form-input" maxlength="15" placeholder="05X-XXXXXXX">
+      </div>
+
+      <div class="form-row">
+        <label>בחר מעסיק <span style="color:#dc2626">*</span></label>
+        <select id="contract-employer-select" class="form-input">
+          <option value="">בחר מעסיק...</option>
+        </select>
+      </div>
+
+      <p class="error" id="contract-error"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="new-contract-modal">ביטול</button>
+      <button class="btn-primary" id="btn-create-contract">צור קישור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── חלון הצגת קישור ─────────── -->
+<div class="modal-backdrop" id="link-modal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🎉 הקישור מוכן!</h2>
+      <button class="modal-close" data-close="link-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="text-align:center;color:#6b7280;margin-bottom:16px">
+        שלח את הקישור לעובד ב-WhatsApp
+      </p>
+      <div class="share-link-box">
+        <input type="text" id="contract-link" class="form-input" readonly>
+        <button class="btn-copy" id="btn-copy-contract-link">📋 העתק</button>
+      </div>
+      <p id="copy-confirm" style="text-align:center;color:#10b981;height:20px;margin-top:8px;font-size:13px"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-whatsapp" id="btn-send-contract-whatsapp">📱 שלח ב-WhatsApp</button>
+      <button class="btn-primary" data-close="link-modal">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── חלון פרטי חוזה ─────────── -->
+<div class="modal-backdrop" id="contract-details-modal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2>פרטי חוזה</h2>
+      <button class="modal-close" data-close="contract-details-modal">×</button>
+    </div>
+    <div class="modal-body" id="contract-details-body"></div>
+    <div class="modal-footer">
+      <button class="btn-danger" id="btn-delete-contract">🗑 מחק</button>
+      <button class="btn-primary" data-close="contract-details-modal">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── חלון אישור ─────────── -->
+<div class="modal-backdrop" id="confirm-modal" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="confirm-title">אישור</h2>
+      <button class="modal-close" data-close="confirm-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-message" style="text-align:center;color:#4b5563"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" data-close="confirm-modal">ביטול</button>
+      <button class="btn-primary" id="btn-confirm-yes">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="contracts.js"></script>
+
+</body>
+</html>

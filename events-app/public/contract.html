@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מילוי טפסים - גלובל</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* סגנונות מיוחדים לדף החתימה */
+  .contract-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .contract-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+  }
+
+  .step-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto 20px;
+  }
+
+  .step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .step-dot.active {
+    background: #2563eb;
+    color: white;
+  }
+
+  .step-dot.completed {
+    background: #10b981;
+    color: white;
+  }
+
+  .field-row {
+    margin-bottom: 14px;
+  }
+
+  .field-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 600;
+  }
+
+  .field-row label .required {
+    color: #dc2626;
+  }
+
+  .field-row input,
+  .field-row select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  .field-row input:focus,
+  .field-row select:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+
+  .field-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .signature-pad-container {
+    margin-top: 8px;
+  }
+
+  .signature-pad {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    background: #f9fafb;
+    width: 100%;
+    height: 200px;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .signature-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .signature-hint {
+    text-align: center;
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .step-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .step-buttons button {
+    flex: 1;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .section-heading {
+    font-size: 16px;
+    color: #1f2937;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .info-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: #1e40af;
+  }
+
+  .employer-info {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+
+  .employer-info div {
+    margin: 3px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- מצב טעינה -->
+<div id="loading-screen" class="public-container">
+  <div class="public-card">
+    <div class="icon">⏳</div>
+    <p>טוען...</p>
+  </div>
+</div>
+
+<!-- מצב לא נמצא -->
+<div id="not-found-screen" class="public-container" style="display:none">
+  <div class="public-card error-card">
+    <div class="icon">❌</div>
+    <h1>הקישור לא תקין</h1>
+    <p>הקישור שגוי או שהחוזה הוסר. צור קשר עם המנהל.</p>
+  </div>
+</div>
+
+<!-- מצב חתום כבר -->
+<div id="already-signed-screen" class="public-container" style="display:none">
+  <div class="public-card success-card">
+    <div class="icon">✓</div>
+    <h1>הטפסים כבר נחתמו</h1>
+    <p>תודה! המנהל יחזיר אליך בקרוב.</p>
+  </div>
+</div>
+
+<!-- טופס מילוי -->
+<div id="form-screen" class="contract-container" style="display:none">
+
+  <!-- כותרת -->
+  <div class="contract-card" style="text-align:center">
+    <img src="logo.png" alt="גלובל" style="width:70px;margin-bottom:8px" onerror="this.style.display='none'">
+    <h2 style="color:#1f2937;margin:0 0 4px 0">מילוי טפסים</h2>
+    <p style="color:#6b7280;font-size:13px;margin:0">גלובל - חברת כוח אדם</p>
+  </div>
+
+  <!-- אינדיקטור שלבים -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="step-1">1</div>
+    <div class="step-dot" id="step-2">2</div>
+    <div class="step-dot" id="step-3">3</div>
+  </div>
+
+  <!-- שלב 1: פרטים אישיים -->
+  <div class="contract-card" id="section-personal">
+    <h3 class="section-heading">📋 פרטים אישיים</h3>
+
+    <div class="info-box" id="employee-greeting">
+      <strong>שלום!</strong> אתה ממלא טפסים עבור: <span id="employer-name">...</span>
+    </div>
+
+    <div class="employer-info" id="employer-details"></div>
+
+    <div class="field-grid-2">
+      <div class="field-row">
+        <label>שם פרטי <span class="required">*</span></label>
+        <input type="text" id="first_name" maxlength="50">
+      </div>
+      <div class="field-row">
+        <label>שם משפחה <span class="required">*</span></label>
+        <input type="text" id="last_name" maxlength="50">
+      </div>
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field-row">
+        <label>תעודת זהות <span class="required">*</span></label>
+        <input type="text" id="id_number" maxlength="9" inputmode="numeric">
+      </div>
+      <div class="field-row">
+        <label>תאריך לידה</label>
+        <input type="date" id="birth_date">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <label>רחוב ומספר בית</label>
+      <input type="text" id="street" maxlength="100">
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field-row">
+        <label>עיר</label>
+        <input type="text" id="city" maxlength="50">
+      </div>
+      <div class="field-row">
+        <label>מיקוד</label>
+        <input type="text" id="zip_code" maxlength="10" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <label>טלפון נייד <span class="required">*</span></label>
+      <input type="tel" id="mobile_phone" maxlength="15" inputmode="tel">
+    </div>
+
+    <div class="field-row">
+      <label>אימייל</label>
+      <input type="email" id="email" maxlength="100">
+    </div>
+
+    <div class="field-row">
+      <label>מצב משפחתי</label>
+      <select id="marital_status">
+        <option value="">בחר...</option>
+        <option value="רווק/ה">רווק/ה</option>
+        <option value="נשוי/אה">נשוי/אה</option>
+        <option value="גרוש/ה">גרוש/ה</option>
+        <option value="אלמן/ה">אלמן/ה</option>
+        <option value="פרוד/ה">פרוד/ה</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <label>קופת חולים</label>
+      <select id="health_fund">
+        <option value="">בחר...</option>
+        <option value="כללית">כללית</option>
+        <option value="מכבי">מכבי</option>
+        <option value="מאוחדת">מאוחדת</option>
+        <option value="לאומית">לאומית</option>
+      </select>
+    </div>
+
+    <div class="step-buttons">
+      <button class="btn-primary" onclick="goToStep(2)">המשך →</button>
+    </div>
+  </div>
+
+  <!-- שלב 2: בנק ואיש קשר -->
+  <div class="contract-card" id="section-bank" style="display:none">
+    <h3 class="section-heading">🏦 חשבון בנק ופרטים נוספים</h3>
+
+    <div class="info-box">
+      פרטי החשבון משמשים להעברת המשכורת
+    </div>
+
+    <div class="field-row">
+      <label>שם בנק</label>
+      <input type="text" id="bank_name" maxlength="50">
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field-row">
+        <label>סניף</label>
+        <input type="text" id="bank_branch" maxlength="10" inputmode="numeric">
+      </div>
+      <div class="field-row">
+        <label>חשבון</label>
+        <input type="text" id="bank_account" maxlength="20" inputmode="numeric">
+      </div>
+    </div>
+
+    <h3 class="section-heading" style="margin-top:20px">📞 איש קשר לחירום</h3>
+
+    <div class="field-row">
+      <label>שם איש קשר</label>
+      <input type="text" id="emergency_contact_name" maxlength="50">
+    </div>
+
+    <div class="field-row">
+      <label>טלפון איש קשר</label>
+      <input type="tel" id="emergency_contact_phone" maxlength="15" inputmode="tel">
+    </div>
+
+    <div class="step-buttons">
+      <button class="btn-secondary" onclick="goToStep(1)">← חזור</button>
+      <button class="btn-primary" onclick="goToStep(3)">המשך →</button>
+    </div>
+  </div>
+
+  <!-- שלב 3: חתימה -->
+  <div class="contract-card" id="section-signature" style="display:none">
+    <h3 class="section-heading">✍️ חתימה דיגיטלית</h3>
+
+    <div class="info-box">
+      <strong>שים לב:</strong> חתום עם האצבע/עכבר במסגרת למטה.
+      החתימה שלך מאשרת את כל הפרטים שמילאת.
+    </div>
+
+    <p class="signature-hint">חתום כאן ↓</p>
+
+    <div class="signature-pad-container">
+      <canvas id="signature-pad" class="signature-pad" width="500" height="200"></canvas>
+
+      <div class="signature-actions">
+        <button class="btn-secondary" onclick="clearSignature()" style="flex:1">🗑 נקה</button>
+      </div>
+    </div>
+
+    <p class="error" id="submit-error" style="margin-top:10px"></p>
+
+    <div class="step-buttons">
+      <button class="btn-secondary" onclick="goToStep(2)">← חזור</button>
+      <button class="btn-primary" id="btn-submit" onclick="submitContract()">✓ שלח חתום</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- מצב הצלחה -->
+<div id="success-screen" class="public-container" style="display:none">
+  <div class="public-card success-card">
+    <div class="icon">🎉</div>
+    <h1>הטפסים נשלחו!</h1>
+    <p>תודה רבה! המנהל יקבל את הטפסים שלך ויחזיר אליך בקרוב.</p>
+    <p class="hint" style="margin-top:16px">תוכל לסגור את החלון.</p>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="contract.js"></script>
+
+</body>
+</html>
